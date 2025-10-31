@@ -35,6 +35,25 @@ func NewChatServer() *ChatServer {
 	}
 }
 
+func (s *ChatServer) sendToUser(username string, msg *pb.ChatMessage) bool {
+	s.mu.RLock() // 使用读锁
+	defer s.mu.RUnlock()
+
+	found := false
+	for _, conn := range s.connections {
+		if conn.user == username {
+			// 找到收件人！
+			go func(stream pb.ChatService_RealtimeChatServer) { // 异步发送
+				if err := stream.Send(msg); err != nil {
+					log.Printf("Failed to send PM to %s: %v", username, err)
+				}
+			}(conn.stream)
+			found = true
+		}
+	}
+	return found
+}
+
 // RealtimeChat 是 .proto 文件中定义的 RPC 方法的实现
 func (s *ChatServer) RealtimeChat(stream pb.ChatService_RealtimeChatServer) error {
 	log.Println("New client connected...")
@@ -80,9 +99,33 @@ func (s *ChatServer) RealtimeChat(stream pb.ChatService_RealtimeChatServer) erro
 			break
 		}
 
-		// 6. 收到消息，广播给所有人
-		log.Printf("Broadcasting message from %s: %s", msg.User, msg.Text)
-		s.broadcast(msg, clientID) // 广播给除自己外的所有人
+		if msg.RecipientUser == "" {
+			// 这是一个“广播”消息
+			log.Printf("Broadcasting message from %s: %s", msg.User, msg.Text)
+			s.broadcast(msg, clientID) // 广播给除自己外的所有人
+		} else {
+			// 这是一个“私聊”消息
+			log.Printf("Private message from %s to %s", msg.User, msg.RecipientUser)
+
+			// 1. 发送给目标收件人
+			found := s.sendToUser(msg.RecipientUser, msg)
+
+			// 2. 也发一份副本给发送者自己，这样他自己的聊天窗口也会显示
+			if err := stream.Send(msg); err != nil {
+				log.Printf("Failed to send PM copy back to sender %s: %v", clientID, err)
+			}
+
+			// 3. (可选) 如果找不到收件人，通知发送者
+			if !found {
+				systemMsg := &pb.ChatMessage{
+					User: "System",
+					Text: fmt.Sprintf("User '%s' not found or is offline.", msg.RecipientUser),
+				}
+				if err := stream.Send(systemMsg); err != nil {
+					log.Printf("Failed to send 'user not found' to %s: %v", clientID, err)
+				}
+			}
+		}
 	}
 
 	// 7. 循环结束 (客户端断开连接)，清理

@@ -49,7 +49,7 @@ func main() {
 
 	// 5. start a goroutine to *receive* messages
 	waitc := make(chan struct{}) // 用于等待接收 goroutine 结束
-	go readRoutine(stream, waitc)
+	go readRoutine(stream, waitc, userName)
 
 	// 6. send message
 	// for + scanner to read from stdin
@@ -60,7 +60,28 @@ func main() {
 			break
 		}
 
-		if err := stream.Send(&pb.ChatMessage{User: userName, Text: text}); err != nil {
+		recipient := "" // 默认为空，即广播
+		messageText := text
+
+		// 检查是否为私聊命令, 格式: /pm <username> <message>
+		if strings.HasPrefix(text, "/pm ") {
+			parts := strings.SplitN(text, " ", 3)
+			if len(parts) < 3 || parts[1] == "" || parts[2] == "" {
+				fmt.Println("Invalid PM format. Use: /pm <username> <message>")
+				continue // 跳过此次发送
+			}
+			recipient = parts[1]
+			messageText = parts[2]
+		}
+
+		// 组装消息
+		msg := &pb.ChatMessage{
+			User:          userName,
+			Text:          messageText,
+			RecipientUser: recipient, // <-- 设置新字段
+		}
+
+		if err := stream.Send(msg); err != nil {
 			log.Printf("Failed to send message: %v", err)
 			break
 		}
@@ -76,7 +97,7 @@ func main() {
 	log.Println("Disconnected.")
 }
 
-func readRoutine(stream pb.ChatService_RealtimeChatClient, waitc chan struct{}) {
+func readRoutine(stream pb.ChatService_RealtimeChatClient, waitc chan struct{}, userName string) {
 	for {
 		msg, err := stream.Recv()
 		if err == io.EOF {
@@ -90,6 +111,18 @@ func readRoutine(stream pb.ChatService_RealtimeChatClient, waitc chan struct{}) 
 			close(waitc)
 			return
 		}
-		fmt.Printf("[%s]: %s\n", msg.User, msg.Text)
+		if msg.RecipientUser != "" {
+			// 这是一条私信
+			if msg.User == userName {
+				// 是我发出去的
+				fmt.Printf("[You to %s (PM)]: %s\n", msg.RecipientUser, msg.Text)
+			} else {
+				// 是我收到的
+				fmt.Printf("[%s (PM)]: %s\n", msg.User, msg.Text)
+			}
+		} else {
+			// 这是公屏消息
+			fmt.Printf("[%s]: %s\n", msg.User, msg.Text)
+		}
 	}
 }

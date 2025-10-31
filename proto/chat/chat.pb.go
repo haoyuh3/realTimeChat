@@ -24,8 +24,9 @@ const (
 // 消息体
 type ChatMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	User          string                 `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"` // 发送消息的用户名
-	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"` // 消息内容
+	User          string                 `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`                                        // 发送消息的用户名
+	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`                                        // 消息内容
+	RecipientUser string                 `protobuf:"bytes,3,opt,name=recipient_user,json=recipientUser,proto3" json:"recipient_user,omitempty"` // 接收消息的用户名，空表示广播
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -74,16 +75,24 @@ func (x *ChatMessage) GetText() string {
 	return ""
 }
 
+func (x *ChatMessage) GetRecipientUser() string {
+	if x != nil {
+		return x.RecipientUser
+	}
+	return ""
+}
+
 var File_proto_chat_chat_proto protoreflect.FileDescriptor
 
 const file_proto_chat_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x15proto/chat/chat.proto\x12\x04chat\"5\n" +
+	"\x15proto/chat/chat.proto\x12\x04chat\"\\\n" +
 	"\vChatMessage\x12\x12\n" +
 	"\x04user\x18\x01 \x01(\tR\x04user\x12\x12\n" +
-	"\x04text\x18\x02 \x01(\tR\x04text2G\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\x12%\n" +
+	"\x0erecipient_user\x18\x03 \x01(\tR\rrecipientUser2G\n" +
 	"\vChatService\x128\n" +
-	"\fRealtimeChat\x12\x11.chat.ChatMessage\x1a\x11.chat.ChatMessage(\x010\x01B\x1fZ\x1dginHelloWorld/proto/chat;chatb\x06proto3"
+	"\fRealtimeChat\x12\x11.chat.ChatMessage\x1a\x11.chat.ChatMessage(\x010\x01B\x1eZ\x1crealTimeChat/proto/chat;chatb\x06proto3"
 
 var (
 	file_proto_chat_chat_proto_rawDescOnce sync.Once

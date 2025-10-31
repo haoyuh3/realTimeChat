@@ -15,4 +15,5 @@ service ChatService {
 message ChatMessage {
   string user = 1;  // 发送消息的用户名
   string text = 2;  // 消息内容
+  string recipient_user = 3; // 接收消息的用户名，空表示广播
 }
