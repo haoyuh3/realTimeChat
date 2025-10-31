@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package chat;
+
+option go_package = "realTimeChat/proto/chat;chat";
+
+// 聊天服务定义
+service ChatService {
+  // RealtimeChat 是一个双向流 RPC
+  // 客户端和服务器都可以随时读写消息
+  rpc RealtimeChat(stream ChatMessage) returns (stream ChatMessage);
+}
+
+// 消息体
+message ChatMessage {
+  string user = 1;  // 发送消息的用户名
+  string text = 2;  // 消息内容
+}
