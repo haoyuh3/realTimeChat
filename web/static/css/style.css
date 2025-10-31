@@ -1,0 +1,589 @@
+/* 基础样式重置和字体 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+/* 聊天容器 */
+.chat-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* 登录界面样式 */
+.login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.login-box {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+    animation: slideUp 0.5s ease-out;
+}
+
+.login-box h1 {
+    color: #667eea;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+}
+
+.login-box h1 i {
+    margin-right: 10px;
+}
+
+.login-form {
+    margin-bottom: 30px;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 15px 20px;
+    font-size: 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s ease;
+}
+
+.login-form input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.login-form button {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.login-form button:hover {
+    transform: translateY(-2px);
+}
+
+.login-tips {
+    text-align: left;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.login-tips p {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #667eea;
+}
+
+.login-tips ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.login-tips li {
+    margin-bottom: 8px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.login-tips li::before {
+    content: "•";
+    color: #667eea;
+    position: absolute;
+    left: 0;
+}
+
+.login-tips code {
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+/* 聊天界面样式 */
+.chat-screen {
+    width: 100%;
+    height: 100%;
+    max-width: 1200px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.5s ease-out;
+}
+
+/* 聊天头部 */
+.chat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.user-info i {
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+.chat-title h2 {
+    font-size: 1.5em;
+    font-weight: 600;
+}
+
+.chat-title i {
+    margin-right: 10px;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.status i {
+    margin-right: 5px;
+}
+
+.status.connecting i {
+    color: #ffc107;
+    animation: pulse 2s infinite;
+}
+
+.status.connected i {
+    color: #28a745;
+}
+
+.status.disconnected i {
+    color: #dc3545;
+}
+
+#disconnect-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+#disconnect-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 聊天主体 */
+.chat-body {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+/* 侧边栏 */
+.sidebar {
+    width: 250px;
+    background: #f8f9fa;
+    border-right: 1px solid #e1e8ed;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid #e1e8ed;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+}
+
+.sidebar-header h3 {
+    color: #667eea;
+    font-size: 16px;
+}
+
+.user-count {
+    background: #667eea;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.user-list {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.user-item {
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.user-item:hover {
+    background: #e3f2fd;
+}
+
+.user-item i {
+    color: #667eea;
+    margin-right: 10px;
+}
+
+.user-item.current-user {
+    background: #e8f5e8;
+    border-left: 3px solid #28a745;
+}
+
+/* 消息区域 */
+.messages-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.messages-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #fafafa;
+}
+
+/* 消息样式 */
+.message {
+    margin-bottom: 15px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 70%;
+    word-wrap: break-word;
+    animation: messageSlide 0.3s ease-out;
+}
+
+.message.sent {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-left: auto;
+    text-align: right;
+}
+
+.message.received {
+    background: white;
+    border: 1px solid #e1e8ed;
+    margin-right: auto;
+}
+
+.message.system {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    margin: 0 auto;
+    text-align: center;
+    max-width: 90%;
+    font-style: italic;
+}
+
+.message.private {
+    background: #e8f5e8;
+    border: 1px solid #c3e6cb;
+    border-left: 4px solid #28a745;
+}
+
+.message-header {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.message-text {
+    line-height: 1.4;
+}
+
+.message-time {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 4px;
+}
+
+/* 输入区域 */
+.input-area {
+    border-top: 1px solid #e1e8ed;
+    background: white;
+    padding: 20px;
+}
+
+.input-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#message-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 25px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+#message-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+#send-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+#send-btn:hover {
+    transform: scale(1.05);
+}
+
+#send-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.input-tips {
+    text-align: center;
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.input-tips i {
+    margin-right: 5px;
+    color: #667eea;
+}
+
+/* 通知样式 */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    animation: slideInRight 0.3s ease-out;
+}
+
+.notification.error {
+    border-left: 4px solid #dc3545;
+}
+
+.notification.success {
+    border-left: 4px solid #28a745;
+}
+
+.notification.info {
+    border-left: 4px solid #17a2b8;
+}
+
+.notification-content {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.notification button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 动画 */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .chat-container {
+        padding: 10px;
+    }
+    
+    .login-box {
+        padding: 30px 20px;
+    }
+    
+    .chat-screen {
+        border-radius: 10px;
+    }
+    
+    .chat-header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .sidebar {
+        width: 200px;
+    }
+    
+    .sidebar-header {
+        padding: 15px;
+    }
+    
+    .message {
+        max-width: 85%;
+    }
+    
+    .input-area {
+        padding: 15px;
+    }
+    
+    .notification {
+        right: 10px;
+        left: 10px;
+        top: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .chat-body {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: 150px;
+        border-right: none;
+        border-bottom: 1px solid #e1e8ed;
+    }
+    
+    .user-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .user-item {
+        flex: 0 0 auto;
+        margin-bottom: 0;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .message {
+        max-width: 95%;
+    }
+    
+    .chat-header {
+        padding: 10px 15px;
+    }
+    
+    .chat-title h2 {
+        font-size: 1.2em;
+    }
+    
+    .connection-status {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 12px;
+    }
+}
