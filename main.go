@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	pb "realTimeChat/proto/chat"
 	"sync"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	
 )
 
 // WebSocket 升级器
