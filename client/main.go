@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// 2. connect to grpc
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials())) // insecure for localhost
 	if err != nil {
 		log.Fatalf("Did not connect: %v", err)
 	}
@@ -48,7 +48,7 @@ func main() {
 	fmt.Println("---------------------------------------")
 
 	// 5. start a goroutine to *receive* messages
-	waitc := make(chan struct{}) // 用于等待接收 goroutine 结束
+	waitc := make(chan struct{}) // close signal
 	go readRoutine(stream, waitc, userName)
 
 	// 6. send message
@@ -60,25 +60,25 @@ func main() {
 			break
 		}
 
-		recipient := "" // 默认为空，即广播
+		recipient := "" // empty means public message
 		messageText := text
 
-		// 检查是否为私聊命令, 格式: /pm <username> <message>
+		// structure: /pm <username> <message>
 		if strings.HasPrefix(text, "/pm ") {
 			parts := strings.SplitN(text, " ", 3)
 			if len(parts) < 3 || parts[1] == "" || parts[2] == "" {
 				fmt.Println("Invalid PM format. Use: /pm <username> <message>")
-				continue // 跳过此次发送
+				continue
 			}
 			recipient = parts[1]
 			messageText = parts[2]
 		}
 
-		// 组装消息
+		// create message
 		msg := &pb.ChatMessage{
 			User:          userName,
 			Text:          messageText,
-			RecipientUser: recipient, // <-- 设置新字段
+			RecipientUser: recipient,
 		}
 
 		if err := stream.Send(msg); err != nil {
@@ -101,7 +101,6 @@ func readRoutine(stream pb.ChatService_RealtimeChatClient, waitc chan struct{}, 
 	for {
 		msg, err := stream.Recv()
 		if err == io.EOF {
-			// 服务器关闭了流
 			log.Println("Server closed the connection")
 			close(waitc)
 			return
@@ -112,16 +111,13 @@ func readRoutine(stream pb.ChatService_RealtimeChatClient, waitc chan struct{}, 
 			return
 		}
 		if msg.RecipientUser != "" {
-			// 这是一条私信
+			// pm
 			if msg.User == userName {
-				// 是我发出去的
 				fmt.Printf("[You to %s (PM)]: %s\n", msg.RecipientUser, msg.Text)
 			} else {
-				// 是我收到的
 				fmt.Printf("[%s (PM)]: %s\n", msg.User, msg.Text)
 			}
 		} else {
-			// 这是公屏消息
 			fmt.Printf("[%s]: %s\n", msg.User, msg.Text)
 		}
 	}

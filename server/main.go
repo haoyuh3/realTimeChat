@@ -15,50 +15,52 @@ import (
 	pb "realTimeChat/proto/chat"
 )
 
-// connection 结构体用于存储每个客户端的流和用户名
+// connection store stream and user info
 type connection struct {
 	stream pb.ChatService_RealtimeChatServer
 	user   string
 }
 
-// ChatServer 实现了 ChatServiceServer 接口
-// 它管理着所有活跃的客户端连接
+// ChatServer struct
 type ChatServer struct {
 	pb.UnimplementedChatServiceServer
-	mu          sync.RWMutex          // 用于保护 connections map 的读写锁
-	connections map[string]connection // 存储所有活跃的连接 (key: 客户端唯一ID)
+	mu          sync.RWMutex          // read write mutex to protect connections map
+	connections map[string]connection // store active connection
 }
 
+// NewChatServer creates a new ChatServer
 func NewChatServer() *ChatServer {
 	return &ChatServer{
 		connections: make(map[string]connection),
 	}
 }
 
+// sendRoutine sends a message to a specific stream
+func (s *ChatServer) sendRoutine(stream pb.ChatService_RealtimeChatServer, msg *pb.ChatMessage, username string) {
+	if err := stream.Send(msg); err != nil {
+		log.Printf("Failed to send PM to %s: %v", username, err)
+	}
+}
+
 func (s *ChatServer) sendToUser(username string, msg *pb.ChatMessage) bool {
-	s.mu.RLock() // 使用读锁
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	found := false
 	for _, conn := range s.connections {
 		if conn.user == username {
-			// 找到收件人！
-			go func(stream pb.ChatService_RealtimeChatServer) { // 异步发送
-				if err := stream.Send(msg); err != nil {
-					log.Printf("Failed to send PM to %s: %v", username, err)
-				}
-			}(conn.stream)
+			go s.sendRoutine(conn.stream, msg, username)
 			found = true
 		}
 	}
 	return found
 }
 
-// RealtimeChat 是 .proto 文件中定义的 RPC 方法的实现
+// RealtimeChat define in proto file
 func (s *ChatServer) RealtimeChat(stream pb.ChatService_RealtimeChatServer) error {
 	log.Println("New client connected...")
 
-	// 1. 接收第一条消息，它必须包含用户名
+	// 1. accept the first message which should contain user info
 	firstMsg, err := stream.Recv()
 	if err != nil {
 		log.Printf("Failed to receive first message: %v", err)
@@ -69,10 +71,10 @@ func (s *ChatServer) RealtimeChat(stream pb.ChatService_RealtimeChatServer) erro
 		return status.Error(codes.InvalidArgument, "Username cannot be empty")
 	}
 
-	// 2. 为此连接创建一个唯一的 ID
-	clientID := fmt.Sprintf("%s_%p", userName, stream) // 使用用户名和流的内存地址作为简单唯一ID
+	// 2. create a unique client ID
+	clientID := fmt.Sprintf("%s_%p", userName, stream)
 
-	// 3. 将新连接添加到 map 中（受锁保护）
+	// 3. store connection to map
 	s.mu.Lock()
 	s.connections[clientID] = connection{
 		stream: stream,
@@ -82,40 +84,39 @@ func (s *ChatServer) RealtimeChat(stream pb.ChatService_RealtimeChatServer) erro
 
 	log.Printf("User '%s' (ID: %s) joined.", userName, clientID)
 
-	// 4. 广播 "加入" 消息给所有人
+	// 4. broadcast joined msg
 	joinMsg := &pb.ChatMessage{User: "System", Text: fmt.Sprintf("%s has joined the chat", userName)}
-	s.broadcast(joinMsg, clientID) // 广播给除自己外的所有人
+	s.broadcast(joinMsg, clientID)
 
-	// 5. 启动一个 goroutine 来持续接收来自此客户端的消息
+	// 5. hear from client
 	for {
 		msg, err := stream.Recv()
 		if err == io.EOF {
-			// 客户端正常关闭了流 (例如: stream.CloseSend())
+			// stream close
 			break
 		}
 		if err != nil {
-			// 发生错误 (例如: 客户端崩溃或网络中断)
 			log.Printf("Error receiving from %s: %v", clientID, err)
 			break
 		}
 
 		if msg.RecipientUser == "" {
-			// 这是一个“广播”消息
+			// broadcast message
 			log.Printf("Broadcasting message from %s: %s", msg.User, msg.Text)
-			s.broadcast(msg, clientID) // 广播给除自己外的所有人
+			s.broadcast(msg, clientID)
 		} else {
-			// 这是一个“私聊”消息
+			// pm message
 			log.Printf("Private message from %s to %s", msg.User, msg.RecipientUser)
 
-			// 1. 发送给目标收件人
+			// 1. send to recipient
 			found := s.sendToUser(msg.RecipientUser, msg)
 
-			// 2. 也发一份副本给发送者自己，这样他自己的聊天窗口也会显示
+			// 2. send copy back to sender
 			if err := stream.Send(msg); err != nil {
 				log.Printf("Failed to send PM copy back to sender %s: %v", clientID, err)
 			}
 
-			// 3. (可选) 如果找不到收件人，通知发送者
+			// 3. notify sender if recipient not found
 			if !found {
 				systemMsg := &pb.ChatMessage{
 					User: "System",
@@ -128,38 +129,30 @@ func (s *ChatServer) RealtimeChat(stream pb.ChatService_RealtimeChatServer) erro
 		}
 	}
 
-	// 7. 循环结束 (客户端断开连接)，清理
+	// 7. close connection
 	s.mu.Lock()
 	delete(s.connections, clientID)
 	s.mu.Unlock()
 
 	log.Printf("User '%s' (ID: %s) disconnected.", userName, clientID)
 
-	// 8. 广播 "离开" 消息
+	// 8. broadcast left msg
 	leaveMsg := &pb.ChatMessage{User: "System", Text: fmt.Sprintf("%s has left the chat", userName)}
-	s.broadcast(leaveMsg, "") // 广播给所有人
+	s.broadcast(leaveMsg, "")
 
 	return nil
 }
 
-// broadcast 向所有连接的客户端发送消息
-// excludeID 用于指定哪个客户端 *不* 接收此消息 (通常是发送者自己)
+// broadcast message to all clients except the sender
 func (s *ChatServer) broadcast(msg *pb.ChatMessage, excludeID string) {
-	s.mu.RLock() // 使用读锁，允许多个广播同时进行
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	for id, conn := range s.connections {
 		if id == excludeID {
-			continue // 跳过发送者
+			continue // skip sender
 		}
-
-		// 在单独的 goroutine 中发送，以避免一个慢客户端阻塞所有其他客户端
-		go func(stream pb.ChatService_RealtimeChatServer) {
-			if err := stream.Send(msg); err != nil {
-				log.Printf("Failed to send message to %s: %v", id, err)
-				// 在生产环境中，这里可能需要一个机制来清理失败的连接
-			}
-		}(conn.stream)
+		go s.sendRoutine(conn.stream, msg, conn.user)
 	}
 }
 
