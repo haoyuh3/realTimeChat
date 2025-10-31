@@ -21,22 +21,22 @@ type connection struct {
 	user   string
 }
 
-// chatServer 实现了 ChatServiceServer 接口
+// ChatServer 实现了 ChatServiceServer 接口
 // 它管理着所有活跃的客户端连接
-type chatServer struct {
+type ChatServer struct {
 	pb.UnimplementedChatServiceServer
 	mu          sync.RWMutex          // 用于保护 connections map 的读写锁
 	connections map[string]connection // 存储所有活跃的连接 (key: 客户端唯一ID)
 }
 
-func NewChatServer() *chatServer {
-	return &chatServer{
+func NewChatServer() *ChatServer {
+	return &ChatServer{
 		connections: make(map[string]connection),
 	}
 }
 
 // RealtimeChat 是 .proto 文件中定义的 RPC 方法的实现
-func (s *chatServer) RealtimeChat(stream pb.ChatService_RealtimeChatServer) error {
+func (s *ChatServer) RealtimeChat(stream pb.ChatService_RealtimeChatServer) error {
 	log.Println("New client connected...")
 
 	// 1. 接收第一条消息，它必须包含用户名
@@ -101,7 +101,7 @@ func (s *chatServer) RealtimeChat(stream pb.ChatService_RealtimeChatServer) erro
 
 // broadcast 向所有连接的客户端发送消息
 // excludeID 用于指定哪个客户端 *不* 接收此消息 (通常是发送者自己)
-func (s *chatServer) broadcast(msg *pb.ChatMessage, excludeID string) {
+func (s *ChatServer) broadcast(msg *pb.ChatMessage, excludeID string) {
 	s.mu.RLock() // 使用读锁，允许多个广播同时进行
 	defer s.mu.RUnlock()
 
