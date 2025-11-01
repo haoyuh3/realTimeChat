@@ -290,8 +290,8 @@ function sendMessage() {
         messageInput.value = '';
         updateSendButton();
         
-        // 显示发送的消息（包括私人消息）
-        displayMessage(message);
+        // 注意：不在这里显示消息，等待服务器返回后再显示
+        // 这样避免重复显示消息
         
     } catch (error) {
         console.error('发送消息失败:', error);
